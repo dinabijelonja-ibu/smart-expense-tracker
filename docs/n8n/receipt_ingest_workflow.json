@@ -1,0 +1,55 @@
+{
+  "name": "Smart Expense Tracker - Receipt Ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "receipt-ingest"
+      },
+      "name": "Receipt Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/v1/automation/receipt-ingest",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{$env.AUTOMATION_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}"
+      },
+      "name": "Create Expense",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Receipt Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

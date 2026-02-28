@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4.1-mini"
     embedding_model: str = "text-embedding-3-small"
     rag_top_k: int = 5
+    automation_api_key: str | None = None
 
     @field_validator("debug", mode="before")
     @classmethod
