@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.client import LLMClientError, chat_completion
 from app.mcp.tools import TOOL_DEFINITIONS, execute_tool
+from app.rag.service import RAGError, retrieve_context
 from app.services.tool_log_service import log_tool_call
 
 SYSTEM_PROMPT = (
@@ -14,12 +15,30 @@ SYSTEM_PROMPT = (
 )
 
 
+def _build_grounded_system_prompt(retrieved_chunks: list[str]) -> str:
+    if not retrieved_chunks:
+        return SYSTEM_PROMPT
+
+    chunks = "\n".join([f"- {chunk}" for chunk in retrieved_chunks])
+    return (
+        f"{SYSTEM_PROMPT}\n"
+        "Use the following retrieved financial context whenever it is relevant. "
+        "Reference concrete values from it and do not fabricate missing facts.\n"
+        f"Retrieved Context:\n{chunks}"
+    )
+
+
 def run_ai_chat(*, db: Session, user_id: uuid.UUID, user_message: str) -> str:
     if not user_message.strip():
         return "Please provide a message."
 
+    try:
+        retrieved_context = retrieve_context(db, user_id=user_id, question=user_message)
+    except RAGError:
+        retrieved_context = []
+
     messages: list[dict] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": _build_grounded_system_prompt(retrieved_context)},
         {"role": "user", "content": user_message.strip()},
     ]
 

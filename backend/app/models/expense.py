@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -16,5 +16,5 @@ class Expense(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

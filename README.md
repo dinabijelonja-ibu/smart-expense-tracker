@@ -41,3 +41,4 @@ Frontend app: http://localhost:5173
 
 - Auth, expenses, budgets, and analytics endpoints are available in the backend.
 - AI chat endpoint is available at `POST /api/v1/ai/chat` (requires `LLM_API_KEY` in backend `.env`).
+- RAG embedding refresh endpoint is available at `POST /api/v1/ai/embeddings/rebuild`.
