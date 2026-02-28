@@ -39,5 +39,5 @@ Frontend app: http://localhost:5173
 
 ## Phase 1 Notes
 
-- Auth endpoints are scaffolded and intentionally return `501` placeholders.
-- Core business features (expenses, budgets, analytics) are implemented in later phases.
+- Auth, expenses, budgets, and analytics endpoints are available in the backend.
+- AI chat endpoint is available at `POST /api/v1/ai/chat` (requires `LLM_API_KEY` in backend `.env`).

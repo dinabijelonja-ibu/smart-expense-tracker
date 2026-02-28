@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-this-secret"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    llm_api_key: str | None = None
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4.1-mini"
 
     @field_validator("debug", mode="before")
     @classmethod
