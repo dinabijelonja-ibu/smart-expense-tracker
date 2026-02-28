@@ -1,0 +1,43 @@
+# Smart Expense Tracker
+
+Phase 1 scaffolding completed for:
+- FastAPI backend
+- PostgreSQL + pgvector (via Docker Compose)
+- SQLAlchemy + Alembic migration baseline
+- React frontend (Vite)
+
+## 1) Start PostgreSQL + pgvector
+
+```powershell
+docker compose up -d db
+```
+
+## 2) Backend setup
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Backend API: http://localhost:8000
+Health endpoint: http://localhost:8000/api/v1/health
+
+## 3) Frontend setup
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend app: http://localhost:5173
+
+## Phase 1 Notes
+
+- Auth endpoints are scaffolded and intentionally return `501` placeholders.
+- Core business features (expenses, budgets, analytics) are implemented in later phases.
