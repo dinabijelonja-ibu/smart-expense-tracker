@@ -37,9 +37,14 @@ npm run dev
 
 Frontend app: http://localhost:5173
 
+Optional frontend env:
+
+- `VITE_API_BASE_URL` (default: `http://localhost:8000/api/v1`)
+
 ## Phase 1 Notes
 
 - Auth, expenses, budgets, and analytics endpoints are available in the backend.
 - AI chat endpoint is available at `POST /api/v1/ai/chat` (requires `LLM_API_KEY` in backend `.env`).
 - RAG embedding refresh endpoint is available at `POST /api/v1/ai/embeddings/rebuild`.
 - n8n automation endpoints are available under `/api/v1/automation/*` with `X-Automation-Key` header.
+- Frontend Phase 6 pages are implemented: Login/Register, Dashboard, Expenses, Budgets, and AI Chat.
