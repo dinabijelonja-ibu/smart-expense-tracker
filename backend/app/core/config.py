@@ -1,0 +1,35 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
+
+
+class Settings(BaseSettings):
+    app_name: str = "Smart Expense Tracker API"
+    debug: bool = False
+    api_v1_prefix: str = "/api/v1"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/smart_expense_tracker"
+    jwt_secret_key: str = "change-this-secret"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug_value(cls, value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on", "debug", "development", "dev"}:
+                return True
+            if normalized in {"false", "0", "no", "off", "release", "prod", "production"}:
+                return False
+        return value
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+
+settings = Settings()
