@@ -12,6 +12,8 @@ Phase 1 scaffolding completed for:
 docker compose up -d db
 ```
 
+PostgreSQL is exposed on `localhost:55432` to avoid conflicts with local PostgreSQL services.
+
 ## 2) Backend setup
 
 ```powershell

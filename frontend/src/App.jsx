@@ -10,14 +10,19 @@ const PAGES = {
 }
 
 async function apiRequest(path, { method = 'GET', token, body } = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  let response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new Error('Backend is unreachable. Run API server or use preview mode.')
+  }
 
   if (response.status === 204) {
     return null
@@ -25,6 +30,13 @@ async function apiRequest(path, { method = 'GET', token, body } = {}) {
 
   const payload = await response.json()
   if (!response.ok) {
+    if (Array.isArray(payload.detail)) {
+      const formatted = payload.detail
+        .map((item) => item?.msg)
+        .filter(Boolean)
+        .join('; ')
+      throw new Error(formatted || 'Request failed')
+    }
     throw new Error(payload.detail || 'Request failed')
   }
 
@@ -41,6 +53,12 @@ function AuthView({ onAuthSuccess }) {
   async function submitAuth(event) {
     event.preventDefault()
     setError('')
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.')
+      return
+    }
+
     setLoading(true)
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register'
@@ -73,6 +91,7 @@ function AuthView({ onAuthSuccess }) {
           placeholder="Password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          minLength={8}
           required
         />
         <button type="submit" disabled={loading}>
