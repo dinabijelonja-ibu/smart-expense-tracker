@@ -39,6 +39,17 @@ npm run dev
 
 Frontend app: http://localhost:5173
 
+## 4) n8n live execution
+
+```powershell
+docker compose up -d n8n
+```
+
+n8n UI: http://localhost:5678
+
+Import workflow JSON files from `docs/n8n/` and run them from the editor.
+Detailed workflow instructions are in `docs/n8n/README.md`.
+
 Optional frontend env:
 
 - `VITE_API_BASE_URL` (default: `http://localhost:8000/api/v1`)

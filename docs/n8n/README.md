@@ -6,9 +6,61 @@ This folder contains starter n8n workflow JSON templates:
 - `budget_alert_workflow.json`
 - `receipt_ingest_workflow.json` (optional)
 
+## Live n8n Execution (Local)
+
+### 1) Start backend and n8n
+
+Backend should be running on `http://127.0.0.1:8000`.
+
+Start n8n with Docker Compose from project root:
+
+```powershell
+docker compose up -d n8n
+```
+
+Open n8n UI:
+
+- `http://localhost:5678`
+
+### 2) Configure n8n variables
+
+The `docker-compose.yml` n8n service already provides:
+
+- `API_BASE_URL=http://host.docker.internal:8000`
+- `AUTOMATION_API_KEY=change-this-automation-key`
+- `USER_ID=` (set this in n8n after creating a test user)
+
+In n8n, set `USER_ID` in workflow variables or update the service env and restart n8n.
+
+### 3) Import workflows
+
+Import these JSON files in n8n:
+
+- `/workflows/weekly_report_workflow.json`
+- `/workflows/budget_alert_workflow.json`
+- `/workflows/receipt_ingest_workflow.json`
+
+### 4) Execute live tests
+
+- Weekly report: run workflow manually from n8n Editor.
+- Budget alert: run manually or wait for schedule trigger.
+- Receipt ingest: activate the workflow, then call webhook:
+
+```powershell
+$body = @{
+	user_id = '<your-user-uuid>'
+	amount = 9.50
+	category = 'food'
+	description = 'coffee'
+	date = (Get-Date).ToString('yyyy-MM-dd')
+} | ConvertTo-Json -Compress
+
+Invoke-RestMethod -Method Post -Uri 'http://localhost:5678/webhook/receipt-ingest' -ContentType 'application/json' -Body $body
+```
+
 ## Required n8n Environment Variables
 
-- `API_BASE_URL` (for local backend: `http://localhost:8000`)
+- `API_BASE_URL` (from Docker n8n to host backend: `http://host.docker.internal:8000`)
 - `USER_ID` (target user UUID)
 - `AUTOMATION_API_KEY` (must match backend `AUTOMATION_API_KEY`)
 

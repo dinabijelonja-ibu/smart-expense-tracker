@@ -16,5 +16,27 @@ services:
       timeout: 5s
       retries: 5
 
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: smart-expense-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_USER_MANAGEMENT_DISABLED: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: UTC
+      API_BASE_URL: http://host.docker.internal:8000
+      AUTOMATION_API_KEY: change-this-automation-key
+      USER_ID: ""
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./docs/n8n:/workflows:ro
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  n8n_data:
