@@ -28,6 +28,10 @@ def _build_grounded_system_prompt(retrieved_chunks: list[str]) -> str:
     )
 
 
+def _safe_json_dumps(value: dict) -> str:
+    return json.dumps(value, default=str)
+
+
 def run_ai_chat(*, db: Session, user_id: uuid.UUID, user_message: str) -> str:
     if not user_message.strip():
         return "Please provide a message."
@@ -96,7 +100,7 @@ def run_ai_chat(*, db: Session, user_id: uuid.UUID, user_message: str) -> str:
                     "role": "tool",
                     "tool_call_id": tool_call.get("id"),
                     "name": tool_name,
-                    "content": json.dumps(tool_result),
+                    "content": _safe_json_dumps(tool_result),
                 }
             )
 
