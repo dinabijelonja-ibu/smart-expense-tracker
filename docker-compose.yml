@@ -27,6 +27,7 @@ services:
       N8N_PROTOCOL: http
       N8N_USER_MANAGEMENT_DISABLED: "true"
       N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       WEBHOOK_URL: http://localhost:5678/
       GENERIC_TIMEZONE: UTC
       API_BASE_URL: http://host.docker.internal:8000

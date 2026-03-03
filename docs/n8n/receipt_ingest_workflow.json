@@ -4,7 +4,8 @@
   "nodes": [
     {
       "parameters": {
-        "path": "receipt-ingest"
+        "path": "receipt-ingest",
+        "httpMethod": "POST"
       },
       "name": "Receipt Webhook",
       "type": "n8n-nodes-base.webhook",
@@ -29,7 +30,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{$json}}"
+        "jsonBody": "={{$json.body}}"
       },
       "name": "Create Expense",
       "type": "n8n-nodes-base.httpRequest",
