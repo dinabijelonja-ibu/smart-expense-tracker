@@ -1,9 +1,10 @@
-services:
-  - type: pserv
-    name: smart-expense-db
+databases:
+  - name: smart-expense-db
+    databaseName: smart_expense_tracker
+    user: smart_expense_tracker_user
     plan: free
-    region: oregon
-    ipAllowList: []
+
+services:
   - type: web
     name: smart-expense-backend
     runtime: python
