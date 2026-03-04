@@ -42,7 +42,7 @@ services:
       - key: AUTOMATION_API_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://smart-expense-frontend.onrender.com
+        value: https://smart-expense-frontend.onrender.com,https://smart-expense-frontend-a5km.onrender.com
 
   - type: web
     name: smart-expense-frontend
