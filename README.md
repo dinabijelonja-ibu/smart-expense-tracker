@@ -1,10 +1,28 @@
 # Smart Expense Tracker
 
-Phase 1 scaffolding completed for:
-- FastAPI backend
-- PostgreSQL + pgvector (via Docker Compose)
-- SQLAlchemy + Alembic migration baseline
-- React frontend (Vite)
+Smart Expense Tracker is a full-stack personal finance app with AI and automation.
+
+## Overview
+
+- Track expenses with categories, dates, and descriptions
+- Manage monthly budgets
+- View analytics (monthly summary, category breakdown, forecast)
+- Use AI chat with retrieval-augmented context (RAG)
+- Run automation workflows through n8n (e.g., receipt ingest, alerts, reports)
+
+## Tech Stack
+
+- Backend: FastAPI, SQLAlchemy, Alembic
+- Database: PostgreSQL + pgvector
+- Frontend: React + Vite
+- Automation: n8n
+- Deployment: Render Blueprint (`render.yaml`)
+
+## Documentation
+
+- Implementation guide: `docs/implementation_guide.md`
+- n8n workflows and setup: `docs/n8n/README.md`
+- Agentic coding standards: `docs/AGENTIC_CODING_GUIDELINES.md`
 
 ## 1) Start PostgreSQL + pgvector
 
