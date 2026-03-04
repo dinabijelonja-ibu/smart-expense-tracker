@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import ArgumentError
 
 
 class Settings(BaseSettings):
@@ -37,11 +39,20 @@ class Settings(BaseSettings):
         if not isinstance(value, str):
             return value
 
-        normalized = value.strip()
+        normalized = value.strip().strip('"').strip("'")
         if normalized.startswith("postgres://"):
-            return "postgresql+psycopg://" + normalized[len("postgres://"):]
+            normalized = "postgresql+psycopg://" + normalized[len("postgres://"):]
         if normalized.startswith("postgresql://") and "+" not in normalized.split("://", 1)[0]:
-            return "postgresql+psycopg://" + normalized[len("postgresql://"):]
+            normalized = "postgresql+psycopg://" + normalized[len("postgresql://"):]
+
+        try:
+            make_url(normalized)
+        except ArgumentError as exc:
+            raise ValueError(
+                "Invalid DATABASE_URL. Expected a Postgres URL like postgresql://... or "
+                "postgresql+psycopg://.... If using Render Blueprint, remove any manual DATABASE_URL "
+                "override so fromDatabase can inject it."
+            ) from exc
 
         return normalized
 
