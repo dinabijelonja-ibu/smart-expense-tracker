@@ -199,21 +199,35 @@ function DashboardView({ token }) {
 function ExpensesView({ token }) {
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
   const [form, setForm] = useState({ amount: '', category: '', description: '', date: '' })
 
-  async function loadExpenses() {
+  async function loadExpenses({ silent = false } = {}) {
+    if (!silent) {
+      setRefreshing(true)
+    }
     setError('')
     try {
       const data = await apiRequest('/expenses', { token })
       setItems(data.items)
     } catch (requestError) {
       setError(requestError.message)
+    } finally {
+      if (!silent) {
+        setRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
     loadExpenses()
-  }, [])
+
+    const intervalId = setInterval(() => {
+      loadExpenses({ silent: true })
+    }, 10000)
+
+    return () => clearInterval(intervalId)
+  }, [token])
 
   async function addExpense(event) {
     event.preventDefault()
@@ -283,7 +297,12 @@ function ExpensesView({ token }) {
       </article>
 
       <article className="card">
-        <h3>Expenses list</h3>
+        <div className="row-between">
+          <h3>Expenses list</h3>
+          <button type="button" onClick={() => loadExpenses()} disabled={refreshing}>
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
         <div className="stack">
           {items.map((expense) => (
             <div className="list-item" key={expense.id}>

@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +27,7 @@ class BudgetAlertsResponse(BaseModel):
 
 
 class ReceiptIngestRequest(BaseModel):
-    user_id: str
+    user_id: UUID
     amount: float = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=500)

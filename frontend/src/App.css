@@ -46,6 +46,13 @@ body {
   margin-bottom: 16px;
 }
 
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .topbar nav {
   display: flex;
   gap: 8px;
