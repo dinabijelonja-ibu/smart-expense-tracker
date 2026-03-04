@@ -43,8 +43,9 @@ services:
       - key: CORS_ORIGINS
         value: https://your-frontend-name.onrender.com
 
-  - type: static
+  - type: web
     name: smart-expense-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
