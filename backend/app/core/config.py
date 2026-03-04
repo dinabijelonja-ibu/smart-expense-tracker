@@ -31,6 +31,20 @@ class Settings(BaseSettings):
                 return False
         return value
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url_driver(cls, value):
+        if not isinstance(value, str):
+            return value
+
+        normalized = value.strip()
+        if normalized.startswith("postgres://"):
+            return "postgresql+psycopg://" + normalized[len("postgres://"):]
+        if normalized.startswith("postgresql://") and "+" not in normalized.split("://", 1)[0]:
+            return "postgresql+psycopg://" + normalized[len("postgresql://"):]
+
+        return normalized
+
     def get_cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
