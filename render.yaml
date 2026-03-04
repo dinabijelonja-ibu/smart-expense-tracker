@@ -1,4 +1,9 @@
 services:
+  - type: pserv
+    name: smart-expense-db
+    plan: free
+    region: oregon
+    ipAllowList: []
   - type: web
     name: smart-expense-backend
     runtime: python
@@ -14,7 +19,9 @@ services:
       - key: API_V1_PREFIX
         value: /api/v1
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: smart-expense-db
+          property: connectionString
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ALGORITHM
@@ -34,7 +41,7 @@ services:
       - key: AUTOMATION_API_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://your-frontend-name.onrender.com
+        value: https://smart-expense-frontend.onrender.com
 
   - type: web
     name: smart-expense-frontend
