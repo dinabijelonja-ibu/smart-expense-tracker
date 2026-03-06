@@ -202,6 +202,30 @@ function ExpensesView({ token }) {
   const [refreshing, setRefreshing] = useState(false)
   const [form, setForm] = useState({ amount: '', category: '', description: '', date: '' })
 
+  const groupedExpenses = useMemo(() => {
+    const groups = new Map()
+    for (const expense of items) {
+      const key = expense.category || 'Uncategorized'
+      if (!groups.has(key)) {
+        groups.set(key, {
+          category: key,
+          total: 0,
+          entries: [],
+        })
+      }
+      const current = groups.get(key)
+      current.total += expense.amount
+      current.entries.push(expense)
+    }
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        entries: group.entries.sort((a, b) => (a.date < b.date ? 1 : -1)),
+      }))
+      .sort((a, b) => b.total - a.total)
+  }, [items])
+
   async function loadExpenses({ silent = false } = {}) {
     if (!silent) {
       setRefreshing(true)
@@ -294,6 +318,38 @@ function ExpensesView({ token }) {
           />
           <button type="submit">Save expense</button>
         </form>
+
+        <div className="category-section stack-lg">
+          <div className="row-between">
+            <h3>Category cards</h3>
+            <small>{groupedExpenses.length} categories</small>
+          </div>
+
+          <div className="stack">
+            {groupedExpenses.map((group) => (
+              <article className="category-card" key={group.category}>
+                <div className="row-between">
+                  <strong>{group.category}</strong>
+                  <span className="category-total">{group.total.toFixed(2)}</span>
+                </div>
+                <small>{group.entries.length} expense(s)</small>
+
+                <div className="stack category-items">
+                  {group.entries.map((expense) => (
+                    <div className="category-expense-row" key={expense.id}>
+                      <div>
+                        <p>{expense.description || 'No description'}</p>
+                        <small>{expense.date}</small>
+                      </div>
+                      <strong>{expense.amount.toFixed(2)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+            {groupedExpenses.length === 0 ? <p>No categories yet.</p> : null}
+          </div>
+        </div>
       </article>
 
       <article className="card">
