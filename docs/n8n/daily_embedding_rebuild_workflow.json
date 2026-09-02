@@ -1,0 +1,60 @@
+{
+  "id": "7a1f9e2b-5c34-4d1a-9e7f-3b6c8a0d4e21",
+  "name": "Smart Expense Tracker - Daily Embedding Rebuild",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "name": "Nightly Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.API_BASE_URL}}/api/v1/automation/embeddings/daily-rebuild?user_id={{$env.USER_ID}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Key",
+              "value": "={{$env.AUTOMATION_API_KEY}}"
+            }
+          ]
+        }
+      },
+      "name": "Rebuild Daily Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Nightly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Rebuild Daily Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

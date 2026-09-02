@@ -128,17 +128,33 @@ Workflow standards:
 
 ## 8) MCP (Model Context Protocol) Guidelines
 
+Two distinct layers, both wrapping the same deterministic service functions
+via `app/mcp/tools.py::execute_tool` -- don't duplicate business logic
+between them:
+
+- `app/mcp/tools.py` -- OpenAI-style function-calling schemas for the
+  in-process AI chat loop (`app/ai/orchestrator.py`). Reachable only
+  indirectly, through `POST /api/v1/ai/chat`.
+- `app/mcp/server.py` -- the real Model Context Protocol server, mounted at
+  `/mcp` (top-level, not under `/api/v1`), for external MCP clients.
+
 For MCP-enabled features:
 
 - Keep MCP logic isolated from core business logic.
-- Log tool invocations in a structured format (serializable fields only).
-- Handle tool failures gracefully with clear user-safe errors.
+- Log tool invocations in a structured format (serializable fields only) --
+  external MCP calls are tagged `mcp:<tool_name>` in the tool-call log to
+  distinguish them from in-app chat tool calls.
+- Handle tool failures gracefully with clear user-safe errors (raise
+  `mcp.server.mcpserver.exceptions.ToolError` in `app/mcp/server.py` tools,
+  not a bare exception, so the client gets the message instead of a stack
+  trace).
 - Version prompt/tool schemas when making breaking changes.
 
 Operational checks:
 
-- Verify MCP routes are reachable under `/api/v1`.
-- Confirm auth and authorization behavior for each tool-exposed action.
+- Verify the in-app tool-calling path works end-to-end via `POST /api/v1/ai/chat`.
+- Verify the real MCP server is reachable at `/mcp` and rejects calls without a valid `Authorization: Bearer <token>`.
+- Confirm auth and authorization behavior for each tool-exposed action -- every MCP tool call must resolve to, and act only on, the JWT's own user.
 
 ---
 

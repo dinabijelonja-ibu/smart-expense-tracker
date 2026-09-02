@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.category import Category
 from app.models.expense import Expense
+from app.rag import service as rag_service
 from app.services.common import get_or_create_category, normalize_category_name
 
 
@@ -34,6 +35,7 @@ def create_expense(
     db.add(expense)
     db.commit()
     db.refresh(expense)
+    rag_service.sync_expense_related_embeddings(db, expense=expense, category_name=category.name)
     return expense
 
 
@@ -85,6 +87,11 @@ def update_expense(
 
     db.commit()
     db.refresh(expense)
+
+    category_map = get_expense_category_map(db, [expense])
+    rag_service.sync_expense_related_embeddings(
+        db, expense=expense, category_name=category_map.get(expense.category_id, "unknown")
+    )
     return expense
 
 
@@ -93,8 +100,14 @@ def delete_expense(db: Session, *, user_id: uuid.UUID, expense_id: int) -> bool:
     if not expense:
         return False
 
+    expense_id_value = expense.id
+    expense_date = expense.date
+
     db.delete(expense)
     db.commit()
+    rag_service.sync_expense_deletion(
+        db, user_id=user_id, expense_id=expense_id_value, expense_date=expense_date
+    )
     return True
 
 

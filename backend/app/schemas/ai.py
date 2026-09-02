@@ -17,3 +17,10 @@ class RebuildEmbeddingsResponse(BaseModel):
     id: int
     status: str
     content: str
+
+
+class BackfillEmbeddingsResponse(BaseModel):
+    expenses_total: int
+    expenses_synced: int
+    days_synced: int
+    months_synced: int

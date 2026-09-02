@@ -133,6 +133,25 @@ All analytics must be computed in Python services.
 
 # 4. MCP IMPLEMENTATION (Tool Calling Layer)
 
+> **Naming note (as implemented):** this section originally used "MCP" as a
+> stand-in for "structured tool calling" generically. As implemented, the
+> project has two distinct layers, because they solve different problems:
+>
+> - **`app/mcp/tools.py`** -- OpenAI-style function-calling schemas fed to
+>   the LLM inside the in-process AI chat loop (`app/ai/orchestrator.py`).
+>   This is *not* the Model Context Protocol; it never was a standalone
+>   protocol server.
+> - **`app/mcp/server.py`** -- the actual [Model Context Protocol](https://modelcontextprotocol.io):
+>   a real MCP server (`mcp` Python SDK, streamable-HTTP transport) mounted
+>   at `/mcp` on the FastAPI app, so any MCP-compatible client (Claude
+>   Desktop, Claude Code, etc.) can call these tools directly and
+>   independently of the in-app chat, authenticated via the same JWT as the
+>   REST API.
+>
+> Both layers call the same underlying dispatcher (`execute_tool` below), so
+> there is one source of truth for the actual business logic -- only the
+> protocol adapter differs.
+
 ## 4.1 MCP Architecture
 
 Create a dedicated module:
@@ -196,24 +215,48 @@ Log every tool call in database for auditing.
 
 # 5. RAG IMPLEMENTATION
 
-## 5.1 What to Embed
+## 5.1 What to Embed (as implemented)
 
-- Monthly spending summaries
-- Category growth reports
-- Budget goals
-- Optional: financial knowledge documents
+Three granularities, all stored in the same `embeddings` table and
+distinguished by a `metadata.type` / `metadata.key` tag, so a similarity
+search naturally picks whichever granularity best matches the question:
 
-## 5.2 Embedding Pipeline
+- **Per-expense** (`expense:<id>`) -- one line per expense ("On 2026-09-02
+  you spent 12.50 on food: coffee (expense #341)."), for specific-transaction
+  questions ("that coffee last Tuesday").
+- **Daily summary** (`daily-summary:YYYY-MM-DD`) -- one row per day that has
+  expenses, for "what happened yesterday / on the 12th" questions.
+- **Monthly summary** (`monthly-summary:YYYY-MM`) -- one row per month, for
+  "how did this month go" questions.
 
-1. Generate monthly summary text:
-   "In January you spent 450 BAM on food, 300 BAM on rent..."
-2. Generate embedding via LLM embedding API.
-3. Store in pgvector table.
+Budget goals and free-form financial knowledge documents are not embedded
+today; they'd slot into this same table with their own `metadata.type`.
 
-Trigger embedding regeneration:
+## 5.2 Embedding Pipeline (as implemented)
 
-- End of month
-- Major spending change
+Regeneration is **write-time, not scheduled**: `app/services/expense_service.py`
+calls `app.rag.service.sync_expense_related_embeddings` (or
+`sync_expense_deletion`) after every expense create/update/delete, which
+upserts that expense's own embedding plus the affected day's and month's
+summary embeddings in the same request. This was chosen over "regenerate at
+end of month" / "on major spending change" because those triggers require a
+scheduler and are inherently stale between runs, whereas write-time sync
+keeps every granularity always current with zero extra moving parts.
+
+It is best-effort: `RAGError` (e.g. `LLM_API_KEY` unset, embeddings API
+down) is caught and swallowed at the sync boundary, so a slow or unavailable
+embeddings provider never blocks adding/editing/deleting an expense.
+
+Two maintenance endpoints exist for cases write-time sync can't cover:
+
+- `POST /api/v1/ai/embeddings/backfill` (JWT-authenticated) -- rebuilds all
+  three granularities from a user's full expense history. Run once when
+  enabling RAG on an account with pre-existing expenses.
+- `POST /api/v1/automation/embeddings/daily-rebuild` (automation-key gated)
+  -- re-syncs one day's embedding on demand. Intended as an n8n-scheduled
+  nightly safety net (`docs/n8n/daily_embedding_rebuild_workflow.json`) that
+  self-heals a day whose write-time sync failed, rather than as the primary
+  sync mechanism.
 
 ## 5.3 Retrieval Flow
 

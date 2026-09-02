@@ -37,3 +37,10 @@ class ReceiptIngestRequest(BaseModel):
 class ReceiptIngestResponse(BaseModel):
     expense_id: int
     status: str
+
+
+class DailyEmbeddingRebuildResponse(BaseModel):
+    user_id: str
+    date: date
+    id: int
+    status: str

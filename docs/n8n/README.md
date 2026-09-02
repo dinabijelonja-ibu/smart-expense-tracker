@@ -5,6 +5,7 @@ This folder contains starter n8n workflow JSON templates:
 - `weekly_report_workflow.json`
 - `budget_alert_workflow.json`
 - `receipt_ingest_workflow.json` (optional)
+- `daily_embedding_rebuild_workflow.json` -- nightly safety net for the RAG embedding index (see below)
 
 ## Live n8n Execution (Local)
 
@@ -39,6 +40,7 @@ Import these JSON files in n8n:
 - `/workflows/weekly_report_workflow.json`
 - `/workflows/budget_alert_workflow.json`
 - `/workflows/receipt_ingest_workflow.json`
+- `/workflows/daily_embedding_rebuild_workflow.json`
 
 ### 4) Execute live tests
 
@@ -69,6 +71,17 @@ Invoke-RestMethod -Method Post -Uri 'http://localhost:5678/webhook/receipt-inges
 - `GET /api/v1/automation/weekly-report?user_id=<uuid>`
 - `GET /api/v1/automation/budget-alerts?user_id=<uuid>&threshold=80`
 - `POST /api/v1/automation/receipt-ingest`
+- `POST /api/v1/automation/embeddings/daily-rebuild?user_id=<uuid>`
+
+## RAG Embedding Maintenance
+
+Every expense create/update/delete already refreshes its own embedding plus
+that day's and month's summary embeddings in real time (see
+`docs/implementation_guide.md`), so this workflow is a safety net, not the
+primary sync path. Run it nightly to self-heal a day whose write-time sync
+failed (e.g. the embeddings API was briefly down) -- it just re-calls
+`POST /automation/embeddings/daily-rebuild` for `USER_ID`, the same key-gated
+auth as the other automation endpoints.
 
 ## 3-Request Smoke Test (PowerShell)
 

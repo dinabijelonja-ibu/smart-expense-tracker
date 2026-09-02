@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import get_current_user
@@ -11,7 +12,16 @@ from app.db.session import get_db
 from app.main import app
 
 
-def test_register_success(monkeypatch) -> None:
+@pytest.fixture(scope="module")
+def client():
+    # Module-scoped: the mounted MCP server's session manager (see
+    # app/mcp/server.py) only supports being started once per process, so
+    # the app's lifespan must not be entered/exited per test.
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+def test_register_success(client, monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     def fake_register_user(db, *, email: str, password: str) -> str:
@@ -30,11 +40,10 @@ def test_register_success(monkeypatch) -> None:
     app.dependency_overrides[get_db] = override_get_db
 
     try:
-        with TestClient(app) as client:
-            response = client.post(
-                "/api/v1/auth/register",
-                json={"email": "new.user@example.com", "password": "password123"},
-            )
+        response = client.post(
+            "/api/v1/auth/register",
+            json={"email": "new.user@example.com", "password": "password123"},
+        )
     finally:
         app.dependency_overrides.clear()
 
@@ -47,7 +56,7 @@ def test_register_success(monkeypatch) -> None:
     }
 
 
-def test_login_invalid_credentials_returns_401(monkeypatch) -> None:
+def test_login_invalid_credentials_returns_401(client, monkeypatch) -> None:
     def fake_login_user(db, *, email: str, password: str) -> str:
         raise ValueError("Invalid credentials")
 
@@ -59,11 +68,10 @@ def test_login_invalid_credentials_returns_401(monkeypatch) -> None:
     app.dependency_overrides[get_db] = override_get_db
 
     try:
-        with TestClient(app) as client:
-            response = client.post(
-                "/api/v1/auth/login",
-                json={"email": "new.user@example.com", "password": "wrong-password"},
-            )
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"email": "new.user@example.com", "password": "wrong-password"},
+        )
     finally:
         app.dependency_overrides.clear()
 
@@ -71,7 +79,7 @@ def test_login_invalid_credentials_returns_401(monkeypatch) -> None:
     assert response.json()["detail"] == "Invalid credentials"
 
 
-def test_create_expense_success(monkeypatch) -> None:
+def test_create_expense_success(client, monkeypatch) -> None:
     test_user = SimpleNamespace(id=uuid4())
     sentinel_db = object()
 
@@ -113,11 +121,10 @@ def test_create_expense_success(monkeypatch) -> None:
     monkeypatch.setattr(expense_routes, "serialize_expense", fake_serialize_expense)
 
     try:
-        with TestClient(app) as client:
-            response = client.post(
-                "/api/v1/expenses",
-                json={"amount": 11, "category": "food", "description": "tea", "date": "2026-03-02"},
-            )
+        response = client.post(
+            "/api/v1/expenses",
+            json={"amount": 11, "category": "food", "description": "tea", "date": "2026-03-02"},
+        )
     finally:
         app.dependency_overrides.clear()
 
@@ -136,7 +143,7 @@ def test_create_expense_success(monkeypatch) -> None:
     }
 
 
-def test_delete_expense_success(monkeypatch) -> None:
+def test_delete_expense_success(client, monkeypatch) -> None:
     test_user = SimpleNamespace(id=uuid4())
 
     def override_get_db():
@@ -154,8 +161,7 @@ def test_delete_expense_success(monkeypatch) -> None:
     monkeypatch.setattr(expense_routes, "delete_expense", fake_delete_expense)
 
     try:
-        with TestClient(app) as client:
-            response = client.delete("/api/v1/expenses/101")
+        response = client.delete("/api/v1/expenses/101")
     finally:
         app.dependency_overrides.clear()
 
@@ -163,7 +169,7 @@ def test_delete_expense_success(monkeypatch) -> None:
     assert response.content == b""
 
 
-def test_delete_expense_not_found_returns_404(monkeypatch) -> None:
+def test_delete_expense_not_found_returns_404(client, monkeypatch) -> None:
     def override_get_db():
         yield object()
 
@@ -179,8 +185,7 @@ def test_delete_expense_not_found_returns_404(monkeypatch) -> None:
     monkeypatch.setattr(expense_routes, "delete_expense", fake_delete_expense)
 
     try:
-        with TestClient(app) as client:
-            response = client.delete("/api/v1/expenses/999")
+        response = client.delete("/api/v1/expenses/999")
     finally:
         app.dependency_overrides.clear()
 

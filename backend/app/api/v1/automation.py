@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -7,11 +8,17 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.schemas.automation import (
     BudgetAlertsResponse,
+    DailyEmbeddingRebuildResponse,
     ReceiptIngestRequest,
     ReceiptIngestResponse,
     WeeklyReportResponse,
 )
-from app.services.automation_service import build_weekly_report_data, get_budget_alerts, ingest_receipt_expense
+from app.services.automation_service import (
+    build_weekly_report_data,
+    get_budget_alerts,
+    ingest_receipt_expense,
+    rebuild_daily_embedding_for_user,
+)
 
 router = APIRouter(prefix="/automation", tags=["automation"])
 
@@ -59,3 +66,17 @@ def receipt_ingest_endpoint(
         expense_date=payload.date,
     )
     return ReceiptIngestResponse(**result)
+
+
+@router.post(
+    "/embeddings/daily-rebuild",
+    response_model=DailyEmbeddingRebuildResponse,
+    dependencies=[Depends(verify_automation_key)],
+)
+def daily_embedding_rebuild_endpoint(
+    user_id: UUID = Query(...),
+    target_date: date | None = Query(default=None, alias="date"),
+    db: Session = Depends(get_db),
+) -> DailyEmbeddingRebuildResponse:
+    result = rebuild_daily_embedding_for_user(db, user_id=user_id, target=target_date)
+    return DailyEmbeddingRebuildResponse(**result)
